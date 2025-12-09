@@ -1,0 +1,95 @@
+#3.Frontend REACT 
+# !pip install pandas plotly ipywidgets
+
+import pandas as pd
+import plotly.express as px
+import ipywidgets as widgets
+from IPython.display import display, clear_output
+
+# Load your dataset
+df = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+# Ensure column names match (adjust if needed)
+# Expected columns: Age, Gender, Diagnosis, Symptom Severity (1-10), Mood Score (1-10),
+# Therapy Type, Treatment Duration (weeks), Adherence to Treatment (%)
+
+# 🔹 Widgets (Filters)
+search_box = widgets.Text(placeholder="Search patient/diagnosis/therapy")
+diagnosis_dropdown = widgets.Dropdown(
+    options=["All"] + sorted(df["Diagnosis"].dropna().unique().tolist()),
+    description="Diagnosis:"
+)
+severity_slider = widgets.IntSlider(
+    value=1, min=1, max=10, step=1, description="Min Severity"
+)
+date_range = widgets.SelectionRangeSlider(
+    options=sorted(df.index.tolist()),  # assuming no date column in CSV, use row index
+    index=(0, len(df)-1),
+    description="Row Range"
+)
+alert_output = widgets.Output()
+
+# 🔹 Dashboard Update Function
+def update_dashboard(change=None):
+    with alert_output:
+        clear_output()
+
+    filtered = df.copy()
+
+    # Apply filters
+    if diagnosis_dropdown.value != "All":
+        filtered = filtered[filtered["Diagnosis"] == diagnosis_dropdown.value]
+
+    if search_box.value:
+        q = search_box.value.lower()
+        filtered = filtered[
+            filtered.apply(lambda row: q in str(row.values).lower(), axis=1)
+        ]
+
+    filtered = filtered[filtered["Symptom Severity (1-10)"] >= severity_slider.value]
+
+    start, end = date_range.value
+    filtered = filtered.iloc[start:end+1]
+
+    # Show alert
+    with alert_output:
+        print(f"✅ Showing {len(filtered)} records after filtering")
+
+    # 🔸 Charts
+    if not filtered.empty:
+        # Severity distribution over diagnosis
+        fig1 = px.histogram(filtered, x="Diagnosis", color="Diagnosis",
+                            title="Diagnosis Counts", width=600, height=400)
+        fig1.show()
+
+        # Severity over mood score
+        fig2 = px.scatter(filtered, x="Mood Score (1-10)", y="Symptom Severity (1-10)",
+                          color="Therapy Type", size="Adherence to Treatment (%)",
+                          title="Mood vs Severity", width=600, height=400)
+        fig2.show()
+
+        # Therapy type pie chart
+        fig3 = px.pie(filtered, names="Therapy Type", title="Therapy Distribution")
+        fig3.show()
+
+        # Show sample records
+        display(filtered.head(10))
+
+    else:
+        with alert_output:
+            print("⚠️ No records found for the selected filters.")
+
+# 🔹 Bind widgets
+search_box.observe(update_dashboard, names="value")
+diagnosis_dropdown.observe(update_dashboard, names="value")
+severity_slider.observe(update_dashboard, names="value")
+date_range.observe(update_dashboard, names="value")
+
+# 🔹 Display filters + dashboard
+display(widgets.VBox([
+    widgets.HBox([search_box, diagnosis_dropdown]),
+    widgets.HBox([severity_slider, date_range]),
+    alert_output
+]))
+
+update_dashboard()
