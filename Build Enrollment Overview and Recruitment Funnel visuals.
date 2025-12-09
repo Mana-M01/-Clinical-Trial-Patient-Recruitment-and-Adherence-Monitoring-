@@ -1,0 +1,46 @@
+#2.Build Enrollment Overview and Recruitment Funnel visuals.
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 1️⃣ Load your dataset
+data = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+# 2️⃣ Define enrollment stages based on Outcome
+# Example mapping: adjust as per your data
+def enrollment_stage(outcome):
+    if outcome in ["Screened"]:
+        return "Screened"
+    elif outcome in ["Enrolled", "Randomized"]:
+        return "Enrolled"
+    elif outcome in ["Under Treatment"]:
+        return "Under Treatment"
+    elif outcome in ["Dropped Out", "Deteriorated"]:
+        return "Dropped Out"
+    else:
+        return "Other"
+
+data['Enrollment Stage'] = data['Outcome'].apply(enrollment_stage)
+
+# 3️⃣ Calculate counts per stage
+stage_counts = data['Enrollment Stage'].value_counts().reindex(
+    ["Screened", "Enrolled", "Under Treatment", "Dropped Out", "Other"], fill_value=0
+)
+
+# 4️⃣ Enrollment Overview (bar chart)
+plt.figure(figsize=(8,5))
+plt.bar(stage_counts.index, stage_counts.values, color=['skyblue', 'green', 'orange', 'red', 'grey'])
+plt.title('Enrollment Overview')
+plt.ylabel('Number of Patients')
+plt.xlabel('Enrollment Stage')
+plt.show()
+
+# 5️⃣ Recruitment Funnel (descending stages)
+# Sort counts from highest to lowest to simulate funnel
+funnel_stages = ["Screened", "Enrolled", "Under Treatment", "Dropped Out"]
+funnel_counts = stage_counts[funnel_stages]
+
+plt.figure(figsize=(6,5))
+plt.barh(funnel_counts.index[::-1], funnel_counts.values[::-1], color='teal')  # horizontal bar chart
+plt.title('Recruitment Funnel')
+plt.xlabel('Number of Patients')
+plt.show()
