@@ -1,0 +1,20 @@
+#2.Create a Funnel Chart
+import pandas as pd
+import plotly.express as px
+
+# Load your CSV
+df = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+# Prepare funnel data from CSV
+funnels_data = [
+    {"stage": "Screened", "count": int(df.shape[0])},
+    {"stage": "Started Treatment", "count": int(df[df['Treatment Start Date'].notna()].shape[0])},
+    {"stage": "Completed Treatment", "count": int(df[df['Treatment Progress (1-10)'] == 10].shape[0])}
+]
+
+# Convert to DataFrame for Plotly
+funnel_df = pd.DataFrame(funnels_data)
+
+# Create Funnel Chart
+fig = px.funnel(funnel_df, x='count', y='stage', title='Patient Conversion Funnel')
+fig.show()
