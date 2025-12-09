@@ -1,0 +1,32 @@
+#1. a)Plotly
+!pip install plotly
+
+import pandas as pd
+import plotly.express as px
+
+df = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+fig = px.bar(df, x='Diagnosis', y='Symptom Severity (1-10)', color='Therapy Type')
+fig.show()
+#b)Bokeh (interactive dashboards)
+from bokeh.plotting import figure, show, output_notebook
+output_notebook()
+
+p = figure(title="Severity vs Mood", 
+           x_axis_label="Mood Score (1-10)", 
+           y_axis_label="Symptom Severity (1-10)")
+
+# Use scatter instead of circle
+p.scatter(x=df['Mood Score (1-10)'], 
+          y=df['Symptom Severity (1-10)'], 
+          size=10, 
+          color="navy", 
+          alpha=0.5)
+
+show(p)
+#3.Matplotlib / Seaborn (static/semi-interactive)
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.barplot(x='Diagnosis', y='Symptom Severity (1-10)', data=df)
+plt.show()
