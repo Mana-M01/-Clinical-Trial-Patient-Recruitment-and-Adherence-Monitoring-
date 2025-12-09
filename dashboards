@@ -1,0 +1,123 @@
+# -------------------- IMPORT LIBRARIES --------------------
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import ipywidgets as widgets
+from IPython.display import display, clear_output
+
+# -------------------- LOAD DATA --------------------
+df = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+# Clean column names slightly (optional but helpful)
+df.columns = [c.strip() for c in df.columns]
+
+# -------------------- CHART 1: Stacked Bar Chart (Diagnosis by Gender) --------------------
+fig1 = px.bar(
+    df,
+    x="Diagnosis",
+    color="Gender",
+    title="Diagnosis Distribution by Gender",
+    barmode="stack"
+)
+
+# -------------------- CHART 2: Area Chart (Avg Symptom Severity by Age) --------------------
+fig2 = px.area(
+    df.groupby("Age", as_index=False)["Symptom Severity (1-10)"].mean(),
+    x="Age",
+    y="Symptom Severity (1-10)",
+    title="Average Symptom Severity by Age"
+)
+
+# -------------------- CHART 3: KPI CARDS --------------------
+avg_severity = df["Symptom Severity (1-10)"].mean()
+avg_adherence = df["Adherence to Treatment (%)"].mean()
+improved = (df["Outcome"] == "Improved").sum()
+deteriorated = (df["Outcome"] == "Deteriorated").sum()
+
+fig3 = go.Figure()
+
+fig3.add_trace(go.Indicator(
+    mode="number",
+    value=avg_severity,
+    title={"text": "Avg Symptom Severity (1-10)"},
+    domain={'x': [0, 0.3], 'y': [0, 1]}
+))
+fig3.add_trace(go.Indicator(
+    mode="number",
+    value=avg_adherence,
+    title={"text": "Avg Adherence (%)"},
+    domain={'x': [0.35, 0.65], 'y': [0, 1]}
+))
+fig3.add_trace(go.Indicator(
+    mode="number",
+    value=improved,
+    title={"text": "Improved Patients"},
+    domain={'x': [0.7, 1], 'y': [0, 1]}
+))
+fig3.update_layout(title_text="KPI Summary")
+
+# -------------------- CHART 4: Pie Chart (Adherence Distribution) --------------------
+fig4 = px.pie(
+    df,
+    names="Outcome",
+    title="Patient Outcomes Distribution"
+)
+
+# -------------------- CHART 5: Waterfall Chart (Sleep Quality by Diagnosis) --------------------
+sleep_quality = df.groupby("Diagnosis", as_index=False)["Sleep Quality (1-10)"].mean()
+fig5 = go.Figure(go.Waterfall(
+    name="Sleep Quality",
+    orientation="v",
+    x=sleep_quality["Diagnosis"],
+    y=sleep_quality["Sleep Quality (1-10)"],
+))
+fig5.update_layout(title="Average Sleep Quality by Diagnosis")
+
+# -------------------- CHART 6: Funnel Chart (Patient Progress) --------------------
+progress = {
+    "Stage": ["Diagnosed", "Under Treatment", "Improved", "Recovered"],
+    "Count": [
+        len(df),
+        int(len(df) * 0.8),
+        improved,
+        int(len(df) * 0.6)
+    ]
+}
+funnel_df = pd.DataFrame(progress)
+fig6 = px.funnel(funnel_df, x="Count", y="Stage", title="Patient Progress Funnel")
+
+# -------------------- WIDGETS FOR DASHBOARD --------------------
+tab_nest = widgets.Tab()
+children = [
+    widgets.Output(), widgets.Output(), widgets.Output(),
+    widgets.Output(), widgets.Output(), widgets.Output()
+]
+tab_nest.children = children
+
+titles = [
+    "Diagnosis by Gender",
+    "Symptom Severity by Age",
+    "KPI Summary",
+    "Outcome Distribution",
+    "Sleep Quality by Diagnosis",
+    "Patient Progress Funnel"
+]
+for i in range(len(titles)):
+    tab_nest.set_title(i, titles[i])
+
+# Display each chart in a tab
+with children[0]:
+    display(fig1)
+with children[1]:
+    display(fig2)
+with children[2]:
+    display(fig3)
+with children[3]:
+    display(fig4)
+with children[4]:
+    display(fig5)
+with children[5]:
+    display(fig6)
+
+display(tab_nest)
+  
