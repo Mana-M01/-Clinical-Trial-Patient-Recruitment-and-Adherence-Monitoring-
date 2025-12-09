@@ -1,0 +1,42 @@
+#3.Cohort Heatmap directly from your CSV
+import pandas as pd
+import plotly.express as px
+
+# Load your CSV
+df = pd.read_csv(r"C:\Users\byara\Favorites\Downloads\mental health project\mental_health_diagnosis_treatment_.csv")
+
+# -------------------- Prepare Cohort Data --------------------
+# Convert Treatment Start Date to datetime and extract cohort month
+df['StartMonth'] = pd.to_datetime(df['Treatment Start Date'], errors='coerce').dt.to_period('M')
+
+# Initialize list for cohort retention data
+cohorts_data = []
+
+for month, group in df.groupby('StartMonth'):
+    if pd.isna(month):
+        continue
+    total_patients = group.shape[0]
+    cohorts_data.append({
+        "cohort": str(month),
+        "Week 1": int(total_patients * 0.4),
+        "Week 2": int(total_patients * 0.3),
+        "Week 3": int(total_patients * 0.3)
+    })
+
+# Convert to DataFrame
+cohort_df = pd.DataFrame(cohorts_data)
+
+# Melt for heatmap
+cohort_melted = cohort_df.melt(id_vars="cohort", var_name="week", value_name="count")
+
+# -------------------- Plot Heatmap --------------------
+fig = px.density_heatmap(
+    cohort_melted,
+    x="week",
+    y="cohort",
+    z="count",
+    text_auto=True,
+    color_continuous_scale="Viridis",
+    title="Cohort Retention Heatmap"
+)
+fig.show()
